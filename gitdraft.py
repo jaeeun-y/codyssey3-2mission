@@ -20,9 +20,9 @@ from typing import Optional
 class GitChanges:
     """A compact snapshot of the worktree used as the AI prompt context."""
 
-    status: str
-    diff: str
-    files: list[str]
+    status: str      #git 상태 출력
+    diff: str        #변경 내용
+    files: list[str] #변경 파일 경로 목록
 
 
 def run_git(*args: str) -> str:
@@ -39,7 +39,7 @@ def run_git(*args: str) -> str:
     return result.stdout
 
 
-def require_repo_root() -> Path:
+def require_repo_root() -> Path: #저장소 확인
     """Require the current directory to be exactly the repository root."""
     root = Path(run_git("rev-parse", "--show-toplevel")).resolve()
     if Path.cwd().resolve() != root:
@@ -47,7 +47,7 @@ def require_repo_root() -> Path:
     return root
 
 
-def redact(text: str) -> str:
+def redact(text: str) -> str: #민감정보 마스킹
     """Mask common credentials and email addresses before sending a diff."""
     patterns = [
         (r"(?i)(\b(?:api[_-]?key|token|secret|password)\b\s*[:=]\s*)['\"]?[^\s'\"]+", r"\1[REDACTED]"),
@@ -61,14 +61,14 @@ def redact(text: str) -> str:
 
 
 def collect_changes(safe_mode: bool) -> GitChanges:
-    """Collect status and diff. Safe mode caps files/lines and redacts patterns."""
+
     status = run_git("status", "--short", "--branch").strip()
-    raw_status = run_git("status", "--porcelain")
+    raw_status = run_git("status", "--porcelain") #컴퓨터용
     files = []
-    for line in raw_status.splitlines():
+    for line in raw_status.splitlines(): #여러 줄로 이루어진 문자열을 리스트로 반환
         # Porcelain paths start at column 4; rename records can contain an arrow.
         path = line[3:].split(" -> ")[-1]
-        files.append(path)
+        files.append(path) #맨 마지막에 새로운 요소를 추가하는 함수
 
     has_head = subprocess.run(
         ["git", "rev-parse", "--verify", "HEAD"], capture_output=True, check=False
@@ -241,7 +241,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         if args.command == "commit":
             print("\n========== Commit Message ==========")
             print(format_commit(generated))
-        else:
+        else: 
             title, body = format_pr(generated)
             print("\n========== Pull Request ==========")
             print(f"제목: {title}\n\n{body}")
