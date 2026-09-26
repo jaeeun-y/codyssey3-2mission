@@ -117,7 +117,8 @@ diff 문자열에서 흔한 API 키·토큰·비밀번호 형태와 이메일 �
 `git status --short --branch`(사람용)와 `git status --porcelain`(컴퓨터용)으로 현재 상태와 변경 파일 목록을 수집하고, git diff로 변경 내용을 가져옵니다.
 
 ![alt text](image.png)
-![alt text](image-1.png)
+<img width="545" height="266" alt="스크린샷 2026-09-26 오후 5 52 19" src="https://github.com/user-attachments/assets/578a5f7b-9512-4a66-803c-1bdf4578a45a" />
+
 
 - 커밋 이력이 있는 저장소에서는 git diff HEAD를 사용해 staged와 unstaged 변경을 함께 확인합니다.
 - 아직 첫 커밋을 만들지 않은 저장소에서는 HEAD가 없으므로 staged diff를 수집합니다.
