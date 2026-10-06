@@ -42,8 +42,9 @@ def run_git(*args: str) -> str:
 def require_repo_root() -> Path: #저장소 확인
     """Require the current directory to be exactly the repository root."""
     root = Path(run_git("rev-parse", "--show-toplevel")).resolve()
-    if Path.cwd().resolve() != root:
-        raise RuntimeError(f"프로젝트 루트에서 실행하세요: {root}")
+    prefix = run_git("rev-parse", "--show-prefix").strip()
+    if prefix:
+        raise RuntimeError(f"프로젝트 루트에서 실행하세요: {root} (현재 하위 경로: {prefix})")
     return root
 
 
