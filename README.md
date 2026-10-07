@@ -9,23 +9,14 @@
 
 ## 설치와 API 키 설정
 
-별도 Python 패키지 설치는 필요하지 않습니다. `AI_API_KEY`는 셸 환경변수로 설정합니다.
+`AI_API_KEY`는 셸 환경변수로 설정합니다.
 
 ```bash
-export AI_API_KEY="your-api-key"
+pip install -U google-genai
+export GEMINI_API_KEY="YOUR_API_KEY" "
 
-# 선택 사항: OpenAI 호환 서비스의 URL과 기본 모델
-export AI_API_BASE_URL="https://api.openai.com/v1/chat/completions"
-export AI_MODEL="gpt-4o-mini"
-```
 
-PowerShell에서는 다음처럼 설정합니다.
-
-```powershell
-$env:AI_API_KEY = "your-api-key"
-```
-
-키를 소스 코드, 명령행 인자, Git 저장소에 넣지 마세요. 키 설정 여부만 확인하려면 `echo $AI_API_KEY` 대신 셸의 환경변수 목록을 값 노출 없이 확인하세요.
+키를 소스 코드, 명령행 인자, Git 저장소에 넣지 마세요.
 
 ## 실행 방법
 
