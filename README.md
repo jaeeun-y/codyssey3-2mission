@@ -81,6 +81,8 @@ fix(auth): explain login failure
 - Update src/auth.py and tests/test_auth.py.
 ```
 
+![alt text](image.png)
+
 PR 초안:
 
 ```text
@@ -96,6 +98,8 @@ PR 초안:
 ## How to Test
 - Run the authentication test suite.
 ```
+![alt text](image-2.png)
+
 
 결과는 예시일 뿐이며 실제 생성 결과는 현재 diff와 제공한 이유/요구사항에 따라 달라집니다. 커밋 제목은 최대 72자, PR 제목은 최대 80자로 자르고, PR에는 `Why`, `What`, `How to Test` 각 섹션과 최소 한 개 불릿을 후처리로 보장합니다. 테스트 실행 사실은 diff만으로 확인할 수 없으므로 직접 검토해야 합니다.
 
@@ -124,11 +128,3 @@ PR 초안:
 - 저장소 루트에서 실행하되, 바이너리/대용량 파일이나 추적되지 않는 민감 파일을 먼저 제외하는 것이 좋습니다.
 - 매 명령 한 번의 API 요청이 발생하며 Gemini API의 무료 등급 한도 및 데이터 처리 조건이 적용됩니다. 무료 등급에서는 입력 데이터가 제품 개선에 사용될 수 있으니 민감한 diff를 보내지 마세요. 현재 한도와 데이터 정책은 Google의 공식 안내에서 확인하세요.
 - 생성 문구는 초안입니다. 사실성, 테스트 방법, 팀의 커밋 규칙을 확인한 뒤 직접 사용하세요.
-
-## 파일
-
-```text
-gitdraft.py     # CLI 구현
-requirements.txt # Gemini SDK 의존성
-README.md       # 설정, 사용법, 함수 및 API 파라미터 안내
-```
