@@ -12,7 +12,7 @@
 `AI_API_KEY`는 셸 환경변수로 설정합니다.
 
 ```bash
-pip install -U google-genai
+python3 -m pip install "google-genai>=1.41.0,<2.0.0"
 export GEMINI_API_KEY="YOUR_API_KEY" "
 
 
