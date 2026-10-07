@@ -4,13 +4,10 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 import subprocess
 import sys
-import urllib.error
-import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -42,8 +39,11 @@ def run_git(*args: str) -> str:
 def require_repo_root() -> Path:
     """Require the current directory to be exactly the repository root."""
     root = Path(run_git("rev-parse", "--show-toplevel")).resolve()
-    if Path.cwd().resolve() != root:
-        raise RuntimeError(f"프로젝트 루트에서 실행하세요: {root}")
+    # Git reports an empty prefix only when the command runs at the repository
+    # root. This avoids relying on path-string normalization across platforms.
+    prefix = run_git("rev-parse", "--show-prefix").strip()
+    if prefix:
+        raise RuntimeError(f"프로젝트 루트에서 실행하세요: {root} (현재 하위 경로: {prefix})")
     return root
 
 
@@ -106,37 +106,41 @@ def collect_changes(safe_mode: bool) -> GitChanges:
 
 
 def call_ai(prompt: str, model: str, temperature: float, max_tokens: int) -> str:
-    """Call an OpenAI-compatible Chat Completions REST endpoint once."""
-    api_key = os.getenv("AI_API_KEY")
+    """Call Gemini once through Google's Gen AI Python SDK."""
+    api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        raise RuntimeError("AI_API_KEY 환경변수를 설정하세요.")
-    endpoint = os.getenv("AI_API_BASE_URL", "https://api.openai.com/v1/chat/completions")
-    payload = {
-        "model": model,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        "messages": [
-            {"role": "system", "content": "You write concise, accurate Git commit and pull request drafts. Follow the requested format exactly. Never invent tests or motivations; state when context is missing."},
-            {"role": "user", "content": prompt},
-        ],
-    }
-    request = urllib.request.Request(
-        endpoint,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        method="POST",
-    )
+        raise RuntimeError("GEMINI_API_KEY 환경변수를 설정하세요.")
     try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            data = json.loads(response.read().decode("utf-8"))
-        return data["choices"][0]["message"]["content"].strip()
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")[:1000]
-        raise RuntimeError(f"AI API HTTP {exc.code}: {detail}") from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"AI API 네트워크 오류: {exc.reason}") from exc
-    except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
-        raise RuntimeError(f"AI API 응답 형식을 해석할 수 없습니다: {exc}") from exc
+        from google import genai
+    except ImportError as exc:
+        raise RuntimeError(
+            "Gemini SDK가 설치되지 않았습니다. `python3 -m pip install -r requirements.txt`를 실행하세요."
+        ) from exc
+
+    client = None
+    try:
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=genai.types.GenerateContentConfig(
+                temperature=temperature,
+                max_output_tokens=max_tokens,
+            ),
+        )
+        generated_text = (response.text or "").strip()
+        if not generated_text:
+            raise RuntimeError("Gemini가 텍스트 응답을 반환하지 않았습니다.")
+        return generated_text
+    except RuntimeError:
+        raise
+    except Exception as exc:
+        # SDK errors include HTTP status / API details; keep them visible so
+        # authentication, quota, and rate-limit failures can be diagnosed.
+        raise RuntimeError(f"Gemini API 호출 실패 ({type(exc).__name__}): {exc}") from exc
+    finally:
+        if client is not None:
+            client.close()
 
 
 def make_prompt(kind: str, changes: GitChanges, reason: str, requirements: str) -> str:
@@ -206,7 +210,7 @@ def format_pr(raw: str) -> tuple[str, str]:
 def build_parser() -> argparse.ArgumentParser:
     """Define shared API options and the commit/pr subcommands."""
     parser = argparse.ArgumentParser(description="Git diff에서 commit/PR 초안을 생성합니다.")
-    parser.add_argument("--model", default=os.getenv("AI_MODEL", "gpt-4o-mini"))
+    parser.add_argument("--model", default=os.getenv("GEMINI_MODEL", "gemini-flash-latest"))
     parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--max-tokens", type=int, default=700)
     parser.add_argument("--safe-mode", action="store_true", help="diff를 200줄/10파일로 제한하고 키·이메일을 마스킹")
